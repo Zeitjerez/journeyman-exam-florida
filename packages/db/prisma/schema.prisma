@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Exam {
+  id                 Int                 @id @default(autoincrement())
+  examCode           String              @unique @map("exam_code")
+  name               String
+  jurisdiction       String
+  licenseTrack       String              @map("license_track")
+  examYear           Int?                @map("exam_year")
+  necEdition         Int                 @map("nec_edition")
+  openBook           Boolean             @default(true) @map("open_book")
+  totalQuestions     Int?                @map("total_questions")
+  durationMinutes    Int?                @map("duration_minutes")
+  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime            @default(now()) @map("updated_at") @db.Timestamptz(6)
+  blueprintCategories BlueprintCategory[]
+  questions          Question[]
+  forumSignals       ForumSignal[]
+
+  @@map("exams")
+}
+
+model BlueprintCategory {
+  id                  Int          @id @default(autoincrement())
+  examId              Int          @map("exam_id")
+  categoryCode        String       @map("category_code")
+  categoryName        String       @map("category_name")
+  weightPercentage    Float?       @map("weight_percentage")
+  questionCountTarget Int?         @map("question_count_target")
+  notes               String?
+  createdAt           DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime     @default(now()) @map("updated_at") @db.Timestamptz(6)
+  exam                Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
+  questions           Question[]
+  forumSignals        ForumSignal[]
+
+  @@unique([examId, categoryCode])
+  @@index([examId, categoryName])
+  @@map("blueprint_categories")
+}
+
+model NecRef {
+  id         Int      @id @default(autoincrement())
+  necEdition Int      @map("nec_edition")
+  article    String
+  section    String?
+  tableId    String?  @map("table_id")
+  titleShort String   @map("title_short")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([necEdition, article, section, tableId])
+  @@map("nec_refs")
+}
+
+model Source {
+  id                Int                @id @default(autoincrement())
+  type              String
+  url               String?
+  notes             String?
+  confidenceDefault Decimal            @map("confidence_default") @db.Decimal(3, 2)
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  questionTemplates QuestionTemplate[]
+  questions         Question[]
+  forumSignals      ForumSignal[]
+
+  @@map("sources")
+}
+
+model QuestionTemplate {
+  id                Int       @id @default(autoincrement())
+  name              String
+  questionType      String    @map("question_type")
+  promptTemplate    String    @map("prompt_template")
+  answerFormat      String?   @map("answer_format")
+  difficultyDefault String?   @map("difficulty_default")
+  sourceId          Int?      @map("source_id")
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  source            Source?   @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  questions         Question[]
+
+  @@map("question_templates")
+}
+
+model Question {
+  id                Int               @id @default(autoincrement())
+  examId            Int               @map("exam_id")
+  blueprintCategory Int               @map("blueprint_category")
+  necEdition        Int               @map("nec_edition")
+  necArticle        String            @map("nec_article")
+  necSection        String?           @map("nec_section")
+  difficulty        String
+  questionType      String            @map("question_type")
+  sourceType        String            @map("source_type")
+  confidence        Decimal           @db.Decimal(3, 2)
+  questionStem      String            @map("question_stem")
+  expectedAnswer    String?           @map("expected_answer")
+  explanation       String?
+  templateId        Int?              @map("template_id")
+  sourceId          Int?              @map("source_id")
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime          @default(now()) @map("updated_at") @db.Timestamptz(6)
+  exam              Exam              @relation(fields: [examId], references: [id], onDelete: Cascade)
+  blueprint         BlueprintCategory @relation(fields: [blueprintCategory], references: [id], onDelete: Restrict)
+  template          QuestionTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  source            Source?           @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  @@map("questions")
+}
+
+model ForumSignal {
+  id                    Int                @id @default(autoincrement())
+  examId                Int                @map("exam_id")
+  blueprintCategory     Int?               @map("blueprint_category")
+  necEdition            Int                @map("nec_edition")
+  topic                 String
+  pattern               String
+  suggestedNecReference String             @map("suggested_nec_reference")
+  sourceId              Int?               @map("source_id")
+  confidence            Decimal            @db.Decimal(3, 2)
+  notes                 String?
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  exam                  Exam               @relation(fields: [examId], references: [id], onDelete: Cascade)
+  blueprint             BlueprintCategory? @relation(fields: [blueprintCategory], references: [id], onDelete: SetNull)
+  source                Source?            @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  @@map("forum_signals")
+}
