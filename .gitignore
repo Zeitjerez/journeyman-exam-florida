@@ -1,0 +1,11 @@
+node_modules
+.next
+.env
+.env.local
+coverage
+*.log
+pnpm-lock.yaml
+package-lock.json
+npm-debug.log*
+apps/web/.next
+packages/db/generated

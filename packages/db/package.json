@@ -1,0 +1,27 @@
+{
+  "name": "@journeyman/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "seed": "tsx seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  },
+  "prisma": {
+    "seed": "tsx seed.ts"
+  },
+  "exports": {
+    ".": "./src/client.ts",
+    "./templates/*": "./templates/*",
+    "./utils/*": "./utils/*"
+  }
+}
